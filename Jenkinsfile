@@ -50,6 +50,7 @@ pipeline {
                 '''  
             }  
         }  
+<<<<<<< HEAD
 
        stage('Deploy to EC2') {
     steps {
@@ -85,6 +86,24 @@ docker run -d -p 80:80 --name website-demo 043207749565.dkr.ecr.ap-south-1.amazo
     }
 }
 
+=======
+  
+        stage('Deploy to EC2') {  
+            steps {  
+                sshagent(['deploy-ec2-key']) {  
+                    sh '''  
+                        ssh -o StrictHostKeyChecking=no ubuntu@$DEPLOY_SERVER "  
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com &&  
+                        docker pull $LATEST_URI &&  
+                        docker stop website-demo || true &&   
+                        docker rm website-demo || true &&  
+                        docker run -d --name website-demo -p 80:80 $LATEST_URI  
+                        "  
+                    '''  
+                }  
+            }  
+        }  
+>>>>>>> c7f8696 (fix deploy stage)
     }  
 
     post {  
