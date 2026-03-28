@@ -1,6 +1,6 @@
 pipeline {  
     agent any  
-  
+
     environment {  
         AWS_REGION = 'ap-south-1'  
         ECR_REPO = 'website-docker-demo'  
@@ -10,20 +10,21 @@ pipeline {
         LATEST_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest"  
         DEPLOY_SERVER = '3.110.29.70'  
     }  
-  
+
     stages {  
+
         stage('Checkout') {  
             steps {  
                 git branch: 'main', url: 'https://github.com/prayag-gohil/website-docker-demo'  
             }  
         }  
-  
+
         stage('Build Docker Image') {  
             steps {  
                 sh 'docker build -t website-docker-demo .'  
             }  
         }  
-  
+
         stage('Tag Docker Image') {  
             steps {  
                 sh '''  
@@ -32,17 +33,15 @@ pipeline {
                 '''  
             }  
         }  
-  
+
         stage('Login to ECR') {  
             steps {  
                 sh '''  
-                    aws ecr get-login-password --region $AWS_REGION | \  
-                    docker login --username AWS --password-stdin \  
-                    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com  
+                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com  
                 '''  
             }  
         }  
-  
+
         stage('Push Image to ECR') {  
             steps {  
                 sh '''  
@@ -51,30 +50,31 @@ pipeline {
                 '''  
             }  
         }  
-  
+
         stage('Deploy to EC2') {  
             steps {  
                 sshagent(['deploy-ec2-key']) {  
                     sh '''  
-                        ssh -o StrictHostKeyChecking=no ubuntu@$DEPLOY_SERVER "  
-                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com &&  
-                        docker pull $LATEST_URI &&  
-                        docker stop website-demo || true &&  
-                        docker rm website-demo || true &&  
-                        docker run -d --name website-demo -p 80:80 $LATEST_URI  
-                        "  
+                        ssh -o StrictHostKeyChecking=no ubuntu@$DEPLOY_SERVER "
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com &&
+                        docker pull $LATEST_URI &&
+                        docker stop website-demo || true &&
+                        docker rm website-demo || true &&
+                        docker run -d --name website-demo -p 80:80 $LATEST_URI
+                        "
                     '''  
                 }  
             }  
         }  
+
     }  
-  
+
     post {  
         success {  
-            echo 'Website deployed successfully'  
+            echo 'Website deployed successfully 🚀'  
         }  
         failure {  
-            echo 'Pipeline failed'  
+            echo 'Pipeline failed '  
         }  
     }  
 }
